@@ -1,0 +1,29 @@
+.report_moduleusage_main {
+    width: 500px;
+    margin: 20px auto;
+}
+.report_moduleusage_sub {
+    width: 1620px;
+    margin: 30px auto;
+}
+.report_moduleusage_sub .report_moduleusage_category {
+    width: 500px;
+    margin: 20px;
+    float: left;
+}
+
+.report_moduleusage_category .generaltable td {
+    padding: 3px 8px;
+}
+
+@media(max-width:1620px) {
+    .report_moduleusage_sub {
+        width: 1080px;
+    }
+}
+
+@media(max-width:1080px) {
+    .report_moduleusage_sub {
+        width: 540px;
+    }
+}
