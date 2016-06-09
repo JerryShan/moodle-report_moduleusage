@@ -23,7 +23,7 @@
 defined('MOODLE_INTERNAL') || die;
 
 function report_moduleusage_output_table($category) {
-    global $DB;
+    global $DB, $PAGE;
 
     $config = get_config('report_moduleusage');
 
