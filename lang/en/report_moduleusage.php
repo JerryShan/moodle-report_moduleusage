@@ -35,3 +35,5 @@ $string['forumother'] = 'Forum (with discussions)';
 
 $string['enrolmethods'] = 'Enrolment methods';
 $string['enrolmethods_desc'] = 'Courses will only be considered visible if they contain enrolments by one or more of the methods selected here';
+
+$string['moduleusage:view'] = 'View Module Usage report';

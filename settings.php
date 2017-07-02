@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$ADMIN->add('reports', new admin_externalpage('report_moduleusage', get_string('moduleusage', 'report_moduleusage'), "$CFG->wwwroot/report/moduleusage/index.php"));
+$ADMIN->add('reports', new admin_externalpage('report_moduleusage', get_string('moduleusage', 'report_moduleusage'), "$CFG->wwwroot/report/moduleusage/index.php", 'report/moduleusage:view'));
 
 if ($hassiteconfig) {
     $enrolplugins = core_component::get_plugin_list('enrol');

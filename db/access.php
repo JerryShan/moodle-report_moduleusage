@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -14,17 +15,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+
 /**
- * Version details.
+ * Capability definitions for the Module Usage report.
  *
- * @package    report
- * @subpackage moduleusage
- * @copyright  2016 Paul Nicholls
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package report_moduleusage
+ * @copyright 2017 Jerry Shan
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2017053100;         // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2015111000;         // Requires this Moodle version
-$plugin->component = 'report_moduleusage'; // Full name of the plugin (used for diagnostics)
+$capabilities = array(
+    // People who can view the report.
+    'report/moduleusage:view' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        //'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        ),
+
+        //'clonepermissionsfrom' => 'coursereport/stats:view',
+    )
+);
