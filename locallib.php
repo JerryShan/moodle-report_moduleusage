@@ -180,7 +180,7 @@ function report_moduleusage_build_query($category, $path, $forums=false, $news=f
                     INNER JOIN ($totalsql) t ON m.id=t.id
                     $forumsql
                 WHERE $catwhere cm.visible=1 AND cat.visible=1 AND ce.visible=1
-                GROUP BY m.id) counts 
+                GROUP BY m.id, t.total) counts 
             $modjoinon
             $forumwhere";
 
