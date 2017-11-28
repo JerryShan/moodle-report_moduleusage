@@ -38,7 +38,11 @@ class usage_table extends \table_sql {
         return $str;
     }
     function col_percentage($row) {
-        return round($row->visible / $this->visible_courses * 100, 1) . '%';
+		if($row->visible != 0){
+			return round($row->visible / $this->visible_courses * 100, 1) . '%';
+		} else {
+			return '0%';
+		}
     }
     function col_totalpercentage($row) {
         return round($row->total / $this->total_courses * 100, 1) . '%';
