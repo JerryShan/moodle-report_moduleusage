@@ -30,22 +30,68 @@ require_once('./locallib.php');
 
 $category = optional_param('category', 0, PARAM_INT);
 
-admin_externalpage_setup('report_moduleusage', '', null, '', array('pagelayout'=>'report'));
-echo $OUTPUT->header();
+// CSV format
+$format = optional_param('format','',PARAM_ALPHA);
+$excel = $format == 'excelcsv';
+$csv = $format == 'csv' || $excel;
 
-echo $OUTPUT->heading(get_string('moduleusage', 'report_moduleusage'));
-
-echo html_writer::start_tag('div', array('class' => 'report_moduleusage_main'));
-report_moduleusage_output_table($category);
-echo html_writer::end_tag('div');
-
-echo html_writer::start_tag('div', array('class' => 'report_moduleusage_sub'));
-if ($subcats = $DB->get_records('course_categories', array('parent'=>$category, 'visible'=>1))) {
-    foreach ($subcats as $cat) {
-        report_moduleusage_output_table($cat->id);
+function csv_quote($value) {
+    global $excel;
+    if ($excel) {
+        return core_text::convert('"'.str_replace('"',"'",$value).'"','UTF-8','UTF-16LE');
+    } else {
+        return '"'.str_replace('"',"'",$value).'"';
     }
 }
-echo html_writer::end_tag('div');
 
+if ($csv) {
+	header('Content-Disposition: attachment; filename=report_moduleusage-'.$category.'.csv');
+
+    // Unicode byte-order mark for Excel
+    if ($excel) {
+        header('Content-Type: text/csv; charset=UTF-16LE');
+        print chr(0xFF).chr(0xFE);
+        $sep="\t".chr(0);
+        $line="\n".chr(0);
+    } else {
+        header('Content-Type: text/csv; charset=UTF-8');
+        $sep=",";
+        $line="\n";
+	}
+
+	report_moduleusage_output_table($category, $csv, $sep, $line);
+} else {
+    admin_externalpage_setup('report_moduleusage', '', null, '', array('pagelayout'=>'report'));
+    echo $OUTPUT->header();
+
+    echo $OUTPUT->heading(get_string('moduleusage', 'report_moduleusage'));
+
+    echo html_writer::start_tag('div', array('class' => 'report_moduleusage_main'));
+    report_moduleusage_output_table($category);
+    echo html_writer::end_tag('div');
+
+    echo html_writer::start_tag('div', array('class' => 'report_moduleusage_sub'));
+}
+
+if ($subcats = $DB->get_records('course_categories', array('parent'=>$category, 'visible'=>1))) {
+    foreach ($subcats as $cat) {
+        report_moduleusage_output_table($cat->id, $csv, $sep, $line);
+    }
+}
+
+if ($csv) {
+    exit;
+} else {
+    echo html_writer::end_tag('div');
+}
+
+echo html_writer::start_tag('div', array('class' => 'report_moduleusage_main'));
+
+print '<ul class="moduleusage-actions">
+        <li><a href="index.php?category='.$category.'&amp;format=csv">'.get_string('csvdownload','completion').'</a></li>
+        <li><a href="index.php?category='.$category.'&amp;format=excelcsv">'.get_string('excelcsvdownload','completion').'</a></li>
+        </ul>';
+
+echo html_writer::end_tag('div');
 
 echo $OUTPUT->footer();

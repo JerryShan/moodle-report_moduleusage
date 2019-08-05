@@ -2,6 +2,12 @@
     width: 500px;
     margin: 20px auto;
 }
+
+.report_moduleusage_main .moduleusage-actions {
+    text-align: center;
+    list-style: none;
+}
+
 .report_moduleusage_sub {
     width: 1620px;
     margin: 30px auto;

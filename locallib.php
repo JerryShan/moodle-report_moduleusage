@@ -22,7 +22,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-function report_moduleusage_output_table($category) {
+function report_moduleusage_output_table($category, $csv, $sep, $line) {
     global $DB, $PAGE;
 
     $config = get_config('report_moduleusage');
@@ -41,6 +41,7 @@ function report_moduleusage_output_table($category) {
         $cat = $DB->get_record('course_categories', array('id' => $category), '*', MUST_EXIST);
         $path = $cat->path;
         $heading = $cat->name;
+        $headingtext = $cat->name;
         $linkheading = true;
         $params = array($category, "$path/%");
         
@@ -57,6 +58,7 @@ function report_moduleusage_output_table($category) {
         // Site-level report.
         $path = '/';
         $heading = get_string('sitewideusage', 'report_moduleusage');
+        $headingtext = get_string('sitewideusage', 'report_moduleusage');
         $linkheading = false;
 
         $allcourses = $DB->count_records('course');
@@ -67,39 +69,71 @@ function report_moduleusage_output_table($category) {
                 WHERE c.visible=1 AND cat.visible=1", $enrolparams);
     }
 
+    if ($csv) {
+        print csv_quote($heading) . $line;
+    }
+
     list($main, $mainparams) = report_moduleusage_build_query($category, $path, false, false);
     list($forums, $forumparams) = report_moduleusage_build_query($category, $path, true, false);
     list($news, $newsparams) = report_moduleusage_build_query($category, $path, true, true);
 
     $fields = '*';
     $from = "(($main) UNION ($forums) UNION ($news)) combined"; // 'combined' is the derived table alias.
+    $csvfrom = "(($main) UNION ($forums) UNION ($news))";
     $tblwhere = '1=1';
     $sqlparams = array_merge($mainparams, $forumparams, $newsparams);
-
-    echo html_writer::start_tag('div', array('class' => 'report_moduleusage_category'));
-    if ($linkheading) {
-        $url = new moodle_url('/report/moduleusage/index.php', array('category'=>$category));
-        $heading = html_writer::link($url, $heading);
-    }
-    echo html_writer::tag('h3', $heading);
 
     $counts = new \stdClass();
     $counts->visible = $visiblecourses;
     $counts->total = $allcourses;
-    echo html_writer::span(get_string('coursesvisible', 'report_moduleusage', $counts), 'moduleusage_course_count');
 
-    $table = new \report_moduleusage\usage_table('report_moduleusage_'.$category);
-    $table->define_baseurl($PAGE->url);
-    $table->set_sql($fields, $from, $tblwhere, $sqlparams);
-    $table->set_count_sql('SELECT COUNT(*) FROM {modules}');
-    $table->define_columns(array('name', 'visible', 'percentage', 'total', 'totalpercentage'));
-    $table->define_headers(array('Module', 'Visible', '%', 'Total', 'Total %'));
-    $table->set_total_courses($allcourses);
-    $table->set_visible_courses($visiblecourses);
-    $table->sortable(false, 'name');
+    if ($csv) {
+        print csv_quote(get_string('coursesvisible', 'report_moduleusage',$counts)) . $line;
+        print csv_quote(get_string('module', 'report_moduleusage'));
+        print $sep.csv_quote(get_string('visible', 'report_moduleusage'));
+        print $sep.csv_quote(get_string('visible', 'report_moduleusage') . ' %');
+        print $sep.csv_quote(get_string('total', 'report_moduleusage'));
+        print $sep.csv_quote(get_string('total', 'report_moduleusage') . ' %');
+        print $line;
+        
+        $modules = $DB->get_records_sql($csvfrom . ' ORDER BY name', $sqlparams);
+        foreach ($modules as $module) {
+            $percentagevisible = get_percentage($module->visible, $visiblecourses);
+            $percentagetotal = get_percentage($module->total, $allcourses);
+            $modulename = get_module_displayname($module->name);
 
-    $table->out(100, false); // 100 per page, no initials bar.
-    echo html_writer::end_tag('div');
+            print csv_quote($modulename);
+            print $sep.csv_quote($module->visible);
+            print $sep.csv_quote($percentagevisible);
+            print $sep.csv_quote($module->total);
+            print $sep.csv_quote($percentagetotal);
+            print $line;
+        }
+
+        print $line;
+    } else {
+        echo html_writer::start_tag('div', array('class' => 'report_moduleusage_category'));
+        if ($linkheading) {
+            $url = new moodle_url('/report/moduleusage/index.php', array('category'=>$category));
+            $heading = html_writer::link($url, $heading);
+        }
+
+        echo html_writer::tag('h3', $heading);
+        echo html_writer::span(get_string('coursesvisible', 'report_moduleusage', $counts), 'moduleusage_course_count');
+
+        $table = new \report_moduleusage\usage_table('report_moduleusage_'.$category);
+        $table->define_baseurl($PAGE->url);
+        $table->set_sql($fields, $from, $tblwhere, $sqlparams);
+        $table->set_count_sql('SELECT COUNT(*) FROM {modules}');
+        $table->define_columns(array('name', 'visible', 'percentage', 'total', 'totalpercentage'));
+        $table->define_headers(array('Module', 'Visible', '%', 'Total', 'Total %'));
+        $table->set_total_courses($allcourses);
+        $table->set_visible_courses($visiblecourses);
+        $table->sortable(false, 'name');
+        
+        $table->out(100, false); // 100 per page, no initials bar.
+        echo html_writer::end_tag('div');
+	}
 }
 
 /**
@@ -185,4 +219,37 @@ function report_moduleusage_build_query($category, $path, $forums=false, $news=f
             $forumwhere";
 
     return array($sql, $params);
+}
+
+/**
+ * Return the percentage for the two given values.
+ *
+ * @param int $nummodcourses Number of courses with modules.
+ * @param int $numcourses Total number of courses for the category.
+ * @return string
+ */
+function get_percentage($nummodcourses, $numcourses){
+    if($nummodcourses != 0){
+        return round($nummodcourses / $numcourses * 100, 1) . '%';
+    } else {
+        return '0%';
+    }
+}
+
+/**
+ * Return human-friendly module name.
+ *
+ * @param string module shortname.
+ * @return string
+ */
+function get_module_displayname($modulename){
+    switch($modulename) {
+        case 'forumnews':
+        case 'forumother':
+            return get_string($modulename, 'report_moduleusage');
+            break;
+        default:
+            return get_string('pluginname', 'mod_'.$modulename);
+            break;
+    }
 }
