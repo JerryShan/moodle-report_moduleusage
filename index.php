@@ -67,7 +67,7 @@ if ($csv) {
     echo $OUTPUT->heading(get_string('moduleusage', 'report_moduleusage'));
 
     echo html_writer::start_tag('div', array('class' => 'report_moduleusage_main'));
-    report_moduleusage_output_table($category);
+    report_moduleusage_output_table($category, $csv, $sep, $line);
     echo html_writer::end_tag('div');
 
     echo html_writer::start_tag('div', array('class' => 'report_moduleusage_sub'));
